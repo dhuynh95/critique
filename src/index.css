@@ -406,3 +406,40 @@ body {
 .editor-suggest-mode {
   border-left: 3px solid var(--accent);
 }
+
+/* ========================================
+   Diff Highlighting
+   ======================================== */
+
+/* Block-level indicators */
+.diff-block-added {
+  border-left: 3px solid #4a9 !important;
+  background: rgba(74, 170, 153, 0.05) !important;
+  margin-left: -3px;
+  padding-left: 3px;
+}
+
+.diff-block-modified {
+  border-left: 3px solid var(--accent) !important;
+  margin-left: -3px;
+  padding-left: 3px;
+}
+
+/* Inline word diff */
+.diff-insert {
+  background: rgba(74, 170, 153, 0.25);
+  text-decoration: underline;
+  text-decoration-color: #4a9;
+  text-underline-offset: 2px;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.diff-delete {
+  background: rgba(194, 91, 91, 0.2);
+  text-decoration: line-through;
+  text-decoration-color: #c45a5a;
+  color: var(--text-secondary);
+  border-radius: 2px;
+  padding: 0 1px;
+}

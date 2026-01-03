@@ -1,9 +1,10 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useCreateBlockNote } from '@blocknote/react';
 import ImportZone from './components/ImportZone';
 import Editor from './components/Editor';
 import TopBar from './components/TopBar';
 import { useSuggestMode } from './hooks/useSuggestMode';
+import { DiffHighlightExtension } from './extensions/DiffHighlightExtension';
 
 export default function App() {
   const [activeFile, setActiveFile] = useState(null);
@@ -14,7 +15,14 @@ export default function App() {
   const saveTimeoutRef = useRef(null);
   const pendingLoadedRef = useRef(false);
 
-  const editor = useCreateBlockNote();
+  // Memoize editor options to prevent recreation
+  const editorOptions = useMemo(() => ({
+    _tiptapOptions: {
+      extensions: [DiffHighlightExtension],
+    },
+  }), []);
+
+  const editor = useCreateBlockNote(editorOptions);
   const normalizerEditor = useCreateBlockNote();
 
   const {
@@ -29,6 +37,7 @@ export default function App() {
     exitSuggestMode,
     savePendingChanges,
     pendingMarkdown,
+    blockDiffs,
   } = useSuggestMode(activeFile, editor);
 
   // Save to server
@@ -154,6 +163,7 @@ export default function App() {
             onChange={handleEditorChange}
             mode={mode}
             onAddComment={addComment}
+            blockDiffs={blockDiffs}
           />
         </>
       )}

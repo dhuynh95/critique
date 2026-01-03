@@ -1,8 +1,8 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 
-export default function Editor({ editor, onChange, mode, onAddComment }) {
+export default function Editor({ editor, onChange, mode, onAddComment, blockDiffs }) {
   // Handle Cmd+Shift+M for adding comments
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -27,6 +27,22 @@ export default function Editor({ editor, onChange, mode, onAddComment }) {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [onAddComment]);
+
+  // Update diff highlight extension when blockDiffs or mode changes
+  useEffect(() => {
+    if (!editor?._tiptapEditor) return;
+
+    const storage = editor._tiptapEditor.storage.diffHighlight;
+    if (!storage) return;
+
+    storage.blockDiffs = blockDiffs || [];
+    storage.enabled = mode === 'suggest';
+
+    // Trigger re-decoration
+    editor._tiptapEditor.view.dispatch(
+      editor._tiptapEditor.state.tr.setMeta('diffHighlight', true)
+    );
+  }, [editor, blockDiffs, mode]);
 
   return (
     <div className={`editor-container ${mode === 'suggest' ? 'editor-suggest-mode' : ''}`}>
