@@ -114,52 +114,105 @@ function buildDecorations(doc, blockDiffs) {
 }
 
 /**
+ * Collect all text nodes within a block with their absolute positions
+ */
+function collectTextNodes(blockNode, blockPos) {
+  const textNodes = [];
+  blockNode.descendants((node, relPos) => {
+    if (node.isText) {
+      const from = blockPos + relPos + 1; // +1 for block node opening
+      textNodes.push({
+        node,
+        from,
+        to: from + node.text.length,
+        text: node.text,
+      });
+    }
+  });
+  return textNodes;
+}
+
+/**
+ * Create a DOM element for deleted text widget
+ */
+function createDeletedWidget(text) {
+  const span = document.createElement('span');
+  span.className = 'diff-delete';
+  span.textContent = text;
+  return span;
+}
+
+/**
+ * Find document position for a given index in joined text
+ */
+function findDocPosition(textNodes, textIndex) {
+  let cumulative = 0;
+  for (const tn of textNodes) {
+    const nodeLen = tn.text.length;
+    if (textIndex <= cumulative + nodeLen) {
+      return tn.from + (textIndex - cumulative);
+    }
+    cumulative += nodeLen;
+  }
+  // Past end - return end of last node
+  if (textNodes.length > 0) {
+    const last = textNodes[textNodes.length - 1];
+    return last.to;
+  }
+  return 0;
+}
+
+/**
  * Build inline decorations for word-level diff within a block
  */
 function buildInlineDecorations(blockNode, blockPos, wordDiffs) {
   const decorations = [];
+  const textNodes = collectTextNodes(blockNode, blockPos);
 
-  // Find the text content node within the block
-  let textPos = blockPos;
-  let textNode = null;
+  if (textNodes.length === 0) return decorations;
 
-  blockNode.descendants((node, relPos) => {
-    if (node.isText && !textNode) {
-      textNode = node;
-      textPos = blockPos + relPos + 1; // +1 for block node opening
-    }
-  });
-
-  if (!textNode) return decorations;
-
-  // Map word diffs to positions in current text
-  // Note: We can only decorate text that exists in the current document
-  // Deleted text will be shown via a different mechanism (inline widget) in Phase 2
-  // For now, we highlight insertions in the current text
-
-  const currentText = textNode.text || '';
-  let currentPos = textPos;
-  let currentTextIndex = 0;
+  // Join all text for position mapping
+  const joinedText = textNodes.map(tn => tn.text).join('');
+  let diffIndex = 0; // Position in current document's joined text
 
   for (const part of wordDiffs) {
     if (part.type === 'equal') {
-      // Move position forward
-      currentPos += part.value.length;
-      currentTextIndex += part.value.length;
+      diffIndex += part.value.length;
     } else if (part.type === 'insert') {
-      // Find this text in current document and highlight it
-      const insertStart = currentText.indexOf(part.value, currentTextIndex);
-      if (insertStart !== -1 && insertStart === currentTextIndex) {
-        const from = textPos + insertStart;
-        const to = from + part.value.length;
-        decorations.push(
-          Decoration.inline(from, to, { class: 'diff-insert' })
-        );
-        currentPos += part.value.length;
-        currentTextIndex += part.value.length;
+      // Create inline decoration(s) spanning potentially multiple nodes
+      const startIdx = diffIndex;
+      const endIdx = diffIndex + part.value.length;
+
+      // Find all nodes that overlap with [startIdx, endIdx]
+      let cumulative = 0;
+      for (const tn of textNodes) {
+        const nodeStart = cumulative;
+        const nodeEnd = cumulative + tn.text.length;
+
+        // Check if this node overlaps with our range
+        if (nodeEnd > startIdx && nodeStart < endIdx) {
+          const decoStart = Math.max(startIdx, nodeStart);
+          const decoEnd = Math.min(endIdx, nodeEnd);
+          const from = tn.from + (decoStart - nodeStart);
+          const to = tn.from + (decoEnd - nodeStart);
+
+          if (from < to) {
+            decorations.push(
+              Decoration.inline(from, to, { class: 'diff-insert' })
+            );
+          }
+        }
+        cumulative += tn.text.length;
       }
+      diffIndex += part.value.length;
+    } else if (part.type === 'delete') {
+      // Insert widget at current position showing deleted text
+      const docPos = findDocPosition(textNodes, diffIndex);
+      decorations.push(
+        Decoration.widget(docPos, createDeletedWidget(part.value), { side: -1 })
+      );
+      // Don't advance diffIndex - deleted text doesn't exist in current doc
     }
-    // 'delete' parts don't exist in current document, skip for now
   }
 
   return decorations;
