@@ -17,6 +17,9 @@ if (!fs.existsSync(DOCS_DIR)) {
   fs.mkdirSync(DOCS_DIR, { recursive: true });
 }
 
+// Parse text/plain body
+app.use(express.text({ type: 'text/plain' }))
+
 // API: List all markdown files
 app.get('/api/files', (req, res) => {
   fs.readdir(DOCS_DIR, (err, files) => {
@@ -37,6 +40,19 @@ app.get('/api/files/:filename', (req, res) => {
   fs.readFile(filePath, 'utf-8', (err, content) => {
     if (err) return res.status(404).json({ error: 'File not found' });
     res.type('text/plain').send(content);
+  });
+});
+
+// API: Write markdown file
+app.put('/api/files/:filename', (req, res) => {
+  const filename = path.basename(req.params.filename);
+  if (!filename.endsWith('.md')) {
+    return res.status(400).json({ error: 'Only .md files allowed' });
+  }
+  const filePath = path.join(DOCS_DIR, filename);
+  fs.writeFile(filePath, req.body, 'utf-8', (err) => {
+    if (err) return res.status(500).json({ error: 'Failed to write file' });
+    res.json({ ok: true });
   });
 });
 
