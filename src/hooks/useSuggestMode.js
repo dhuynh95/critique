@@ -7,6 +7,7 @@ import { formatDiffForClipboard, hasChanges, getChangeSummary } from '../utils/d
 export function useSuggestMode(filename, editor) {
   const [mode, setMode] = useState('edit');
   const [originalMarkdown, setOriginalMarkdown] = useState(null);
+  const [pendingMarkdown, setPendingMarkdown] = useState(null);
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const saveTimeoutRef = useRef(null);
@@ -15,6 +16,7 @@ export function useSuggestMode(filename, editor) {
   useEffect(() => {
     if (!filename) {
       setOriginalMarkdown(null);
+      setPendingMarkdown(null);
       setComments([]);
       setMode('edit');
       return;
@@ -26,18 +28,20 @@ export function useSuggestMode(filename, editor) {
       .then(data => {
         setComments(data.comments || []);
         setOriginalMarkdown(data.suggestModeOriginal || null);
+        setPendingMarkdown(data.suggestModePending || null);
         setMode(data.suggestModeOriginal ? 'suggest' : 'edit');
       })
       .catch(() => {
         setComments([]);
         setOriginalMarkdown(null);
+        setPendingMarkdown(null);
         setMode('edit');
       })
       .finally(() => setLoading(false));
   }, [filename]);
 
   // Save annotations (debounced)
-  const saveAnnotations = useCallback(async (newComments, newOriginal) => {
+  const saveAnnotations = useCallback(async (newComments, newOriginal, newPending) => {
     if (!filename) return;
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(async () => {
@@ -47,42 +51,60 @@ export function useSuggestMode(filename, editor) {
         body: JSON.stringify({
           comments: newComments,
           suggestModeOriginal: newOriginal,
+          suggestModePending: newPending,
         }),
       });
     }, 300);
   }, [filename]);
 
-  // Enter suggest mode - snapshot current markdown as original
+  // Enter suggest mode - snapshot current markdown as original and pending
   const enterSuggestMode = useCallback(async () => {
     if (!editor) return;
     const currentMarkdown = await editor.blocksToMarkdownLossy(editor.document);
     setOriginalMarkdown(currentMarkdown);
+    setPendingMarkdown(currentMarkdown);
     setMode('suggest');
-    saveAnnotations(comments, currentMarkdown);
+    saveAnnotations(comments, currentMarkdown, currentMarkdown);
   }, [editor, comments, saveAnnotations]);
 
-  // Exit suggest mode (back to edit, keeps changes)
+  // Exit suggest mode (back to edit, keeps changes but they're not saved to file yet)
   const exitSuggestMode = useCallback(() => {
     setOriginalMarkdown(null);
+    setPendingMarkdown(null);
     setMode('edit');
-    saveAnnotations(comments, null);
+    saveAnnotations(comments, null, null);
   }, [comments, saveAnnotations]);
 
-  // Accept all suggestions - clear original, keep current
-  const acceptAll = useCallback(() => {
+  // Save pending changes (called on each edit in suggest mode)
+  const savePendingChanges = useCallback((markdown) => {
+    setPendingMarkdown(markdown);
+    saveAnnotations(comments, originalMarkdown, markdown);
+  }, [comments, originalMarkdown, saveAnnotations]);
+
+  // Accept all suggestions - save pending to file, clear state
+  const acceptAll = useCallback(async () => {
+    if (!filename || !pendingMarkdown) return;
+    // Save pending content to the actual .md file
+    await fetch(`/api/files/${encodeURIComponent(filename)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'text/plain' },
+      body: pendingMarkdown,
+    });
     setOriginalMarkdown(null);
+    setPendingMarkdown(null);
     setMode('edit');
-    saveAnnotations(comments, null);
-  }, [comments, saveAnnotations]);
+    saveAnnotations(comments, null, null);
+  }, [filename, pendingMarkdown, comments, saveAnnotations]);
 
-  // Reject all suggestions - restore original
+  // Reject all suggestions - restore original to editor, clear state (file unchanged)
   const rejectAll = useCallback(async () => {
     if (!editor || !originalMarkdown) return;
     const blocks = await editor.tryParseMarkdownToBlocks(originalMarkdown);
     editor.replaceBlocks(editor.document, blocks);
     setOriginalMarkdown(null);
+    setPendingMarkdown(null);
     setMode('edit');
-    saveAnnotations(comments, null);
+    saveAnnotations(comments, null, null);
   }, [editor, originalMarkdown, comments, saveAnnotations]);
 
   // Toggle mode
@@ -105,15 +127,15 @@ export function useSuggestMode(filename, editor) {
     };
     const newComments = [...comments, newComment];
     setComments(newComments);
-    saveAnnotations(newComments, originalMarkdown);
-  }, [comments, originalMarkdown, saveAnnotations]);
+    saveAnnotations(newComments, originalMarkdown, pendingMarkdown);
+  }, [comments, originalMarkdown, pendingMarkdown, saveAnnotations]);
 
   // Remove comment
   const removeComment = useCallback((id) => {
     const newComments = comments.filter(c => c.id !== id);
     setComments(newComments);
-    saveAnnotations(newComments, originalMarkdown);
-  }, [comments, originalMarkdown, saveAnnotations]);
+    saveAnnotations(newComments, originalMarkdown, pendingMarkdown);
+  }, [comments, originalMarkdown, pendingMarkdown, saveAnnotations]);
 
   // Copy diff to clipboard
   const copyDiffToClipboard = useCallback(async () => {
@@ -133,6 +155,7 @@ export function useSuggestMode(filename, editor) {
   return {
     mode,
     originalMarkdown,
+    pendingMarkdown,
     comments,
     loading,
     toggleMode,
@@ -142,6 +165,7 @@ export function useSuggestMode(filename, editor) {
     rejectAll,
     addComment,
     removeComment,
+    savePendingChanges,
     copyDiffToClipboard,
     getChanges,
     hasSuggestions: !!originalMarkdown,

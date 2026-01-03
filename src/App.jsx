@@ -12,6 +12,7 @@ export default function App() {
   const [error, setError] = useState(null);
 
   const saveTimeoutRef = useRef(null);
+  const pendingLoadedRef = useRef(false);
 
   const editor = useCreateBlockNote();
   const normalizerEditor = useCreateBlockNote();
@@ -26,6 +27,8 @@ export default function App() {
     hasSuggestions,
     enterSuggestMode,
     exitSuggestMode,
+    savePendingChanges,
+    pendingMarkdown,
   } = useSuggestMode(activeFile, editor);
 
   // Save to server
@@ -43,11 +46,21 @@ export default function App() {
     }
   }, [activeFile, editor]);
 
-  // Debounced save on change
-  const handleEditorChange = useCallback(() => {
+  // Debounced save on change - mode aware
+  const handleEditorChange = useCallback(async () => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(saveToServer, 500);
-  }, [saveToServer]);
+    if (mode === 'edit') {
+      // Edit mode: save to .md file
+      saveTimeoutRef.current = setTimeout(saveToServer, 500);
+    } else {
+      // Suggest mode: save to .comments.json only (pending changes)
+      saveTimeoutRef.current = setTimeout(async () => {
+        if (!editor) return;
+        const markdown = await editor.blocksToMarkdownLossy(editor.document);
+        savePendingChanges(markdown);
+      }, 500);
+    }
+  }, [mode, saveToServer, editor, savePendingChanges]);
 
   // Load file content into editor
   const loadContent = useCallback(async (markdown) => {
@@ -93,6 +106,14 @@ export default function App() {
         .finally(() => setLoading(false));
     }
   }, [normalizerEditor, handleImport]);
+
+  // Load pending markdown into editor on refresh (if in suggest mode) - only once
+  useEffect(() => {
+    if (pendingMarkdown && editor && original !== null && !pendingLoadedRef.current) {
+      pendingLoadedRef.current = true;
+      loadContent(pendingMarkdown);
+    }
+  }, [pendingMarkdown, editor, original, loadContent]);
 
   if (loading) {
     return (
