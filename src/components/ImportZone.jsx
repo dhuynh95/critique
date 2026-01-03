@@ -1,22 +1,37 @@
 import React, { useState, useRef } from 'react';
 import { FileUp } from 'lucide-react';
 
-export default function ImportZone({ onImport }) {
+export default function ImportZone() {
   const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef(null);
 
-  const handleFile = (file) => {
+  const handleFile = async (file) => {
     if (!file || !file.name.endsWith('.md')) return;
-    const reader = new FileReader();
-    reader.onload = (e) => onImport(e.target.result);
-    reader.readAsText(file);
+
+    const content = await file.text();
+    const filename = file.name;
+
+    // Check if file exists on server
+    const res = await fetch(`/api/files/${encodeURIComponent(filename)}`);
+    if (res.ok) {
+      const overwrite = window.confirm(`"${filename}" already exists. Overwrite?`);
+      if (!overwrite) return;
+    }
+
+    // Save to server then redirect
+    await fetch(`/api/files/${encodeURIComponent(filename)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'text/plain' },
+      body: content,
+    });
+
+    window.location.href = `?file=${encodeURIComponent(filename)}`;
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragOver(false);
-    const file = e.dataTransfer.files[0];
-    handleFile(file);
+    handleFile(e.dataTransfer.files[0]);
   };
 
   const handleDragOver = (e) => {
@@ -30,8 +45,7 @@ export default function ImportZone({ onImport }) {
   };
 
   const handleChange = (e) => {
-    const file = e.target.files[0];
-    handleFile(file);
+    handleFile(e.target.files[0]);
   };
 
   return (
