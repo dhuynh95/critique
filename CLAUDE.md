@@ -1,5 +1,9 @@
 # Critique - Claude Code Guidelines
 
+## Meta
+
+When discovering reusable patterns (tooling, commands, architecture) that would help future projects, update `docs/INTERNAL_APP_TEMPLATE.md`.
+
 ## Running Servers
 
 ```bash
