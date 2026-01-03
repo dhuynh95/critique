@@ -1,3 +1,246 @@
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --accent: #c4a35a;
+  --accent-dim: #8b7355;
+  --text-primary: #e8e4dd;
+  --text-secondary: #6b6560;
+  --border: #2a2725;
+  --border-active: #c4a35a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Newsreader', Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* App container */
+.app {
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+/* ========================================
+   Import Zone
+   ======================================== */
+.import-zone-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle grid background */
+.import-zone-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 60px 60px;
+  opacity: 0.3;
+  mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+}
+
+.import-zone {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 4 / 3;
+  border: 1px dashed var(--border);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: var(--bg-secondary);
+}
+
+.import-zone:hover {
+  border-color: var(--accent-dim);
+}
+
+.import-zone--active {
+  border-style: solid;
+  border-color: var(--accent);
+  background: rgba(196, 163, 90, 0.03);
+}
+
+.import-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  z-index: 1;
+}
+
+.import-zone-icon {
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+}
+
+.import-zone-icon--active {
+  color: var(--accent);
+  transform: translateY(-4px);
+}
+
+.import-zone-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.import-zone-title {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.import-zone-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Glow effect on drag */
+.import-zone-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  box-shadow: 0 0 40px rgba(196, 163, 90, 0.15);
+}
+
+.import-zone-glow--active {
+  opacity: 1;
+}
+
+/* ========================================
+   Editor
+   ======================================== */
+.editor-container {
+  min-height: 100vh;
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* BlockNote dark theme overrides */
+.bn-container[data-theming-css-variables-demo] {
+  --bn-colors-editor-background: var(--bg-primary);
+  --bn-colors-editor-text: var(--text-primary);
+  --bn-colors-menu-background: var(--bg-secondary);
+  --bn-colors-menu-text: var(--text-primary);
+  --bn-colors-hovered-background: rgba(196, 163, 90, 0.1);
+  --bn-colors-selected-background: rgba(196, 163, 90, 0.15);
+  --bn-colors-side-menu: var(--text-secondary);
+  --bn-font-family: 'Newsreader', Georgia, serif;
+}
+
+/* Editor typography refinements */
+.bn-editor {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+.bn-editor h1 {
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin-top: 2rem;
+}
+
+.bn-editor h2 {
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin-top: 1.75rem;
+}
+
+.bn-editor h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-top: 1.5rem;
+}
+
+/* Code blocks */
+.bn-editor pre,
+.bn-editor code {
+  font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+  font-size: 0.875em;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+}
+
+.bn-editor code {
+  padding: 0.15em 0.4em;
+}
+
+.bn-editor pre {
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+/* Loading & Error states */
+.loading-state,
+.error-state {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.loading-text {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.error-text {
+  font-size: 1rem;
+  color: #c45a5a;
+}
+
+.error-button {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.error-button:hover {
+  border-color: var(--accent-dim);
+}
+
+/* Hidden utility */
+.hidden {
+  display: none;
+}
