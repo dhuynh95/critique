@@ -2,31 +2,37 @@ import React, { useEffect } from 'react';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 
-export default function Editor({ editor, onChange, mode, onAddComment, blockDiffs }) {
-  // Handle Cmd+Shift+M for adding comments
+export default function Editor({ editor, onChange, mode, onAddComment, onCopyDiff, blockDiffs }) {
+  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'm') {
-        e.preventDefault();
-        const selection = window.getSelection();
-        if (!selection || selection.isCollapsed) return;
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey) {
+        if (e.key === 'm') {
+          // Cmd+Shift+M: Add comment
+          e.preventDefault();
+          const selection = window.getSelection();
+          if (!selection || selection.isCollapsed) return;
 
-        const selectedText = selection.toString().trim();
-        if (!selectedText) return;
+          const selectedText = selection.toString().trim();
+          if (!selectedText) return;
 
-        const comment = prompt('Add comment:');
-        if (comment && onAddComment) {
-          // Get the block ID from selection - simplified approach
-          const blockEl = selection.anchorNode?.parentElement?.closest('[data-block-id]');
-          const blockId = blockEl?.getAttribute('data-block-id') || 'unknown';
-          onAddComment(blockId, selectedText, comment);
+          const comment = prompt('Add comment:');
+          if (comment && onAddComment) {
+            const blockEl = selection.anchorNode?.parentElement?.closest('[data-block-id]');
+            const blockId = blockEl?.getAttribute('data-block-id') || 'unknown';
+            onAddComment(blockId, selectedText, comment);
+          }
+        } else if (e.key === 'c' && onCopyDiff) {
+          // Cmd+Shift+C: Copy diff
+          e.preventDefault();
+          onCopyDiff();
         }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onAddComment]);
+  }, [onAddComment, onCopyDiff]);
 
   // Update diff highlight extension when blockDiffs or mode changes
   useEffect(() => {

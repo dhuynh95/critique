@@ -49,7 +49,7 @@ export default function TopBar({
           </>
         )}
 
-        <button className="topbar-btn" onClick={handleCopy} title="Copy diff">
+        <button className="topbar-btn" onClick={handleCopy} title="Copy diff (⌘⇧C)">
           <Copy size={16} />
           {copied && <span className="topbar-copied">Copied!</span>}
         </button>

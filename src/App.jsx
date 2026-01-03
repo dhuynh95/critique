@@ -163,6 +163,7 @@ export default function App() {
             onChange={handleEditorChange}
             mode={mode}
             onAddComment={addComment}
+            onCopyDiff={copyDiffToClipboard}
             blockDiffs={blockDiffs}
           />
         </>
