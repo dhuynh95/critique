@@ -5,4 +5,4 @@ Launch the server and open it on Chrome MCP (chrome-devtools - navigate_page (MC
 
 Do not pkill -f "node server.js"; pkill -f "vite" as we auto clean at each Claude session.
 
-After npm start, sleep 5 seconds, then do cat (aftto look at the output and then launch Chrome MCP.
+After npm start, sleep 5 seconds, then do cat to look at the output and then launch Chrome MCP.

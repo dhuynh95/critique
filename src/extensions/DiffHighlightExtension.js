@@ -66,24 +66,50 @@ export const DiffHighlightExtension = Extension.create({
 });
 
 /**
+ * Create a widget element for a deleted block
+ */
+function createDeletedBlockWidget(originalText, originalType) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'diff-block-deleted';
+  wrapper.setAttribute('data-block-type', originalType || 'paragraph');
+
+  const content = document.createElement('span');
+  content.className = 'diff-block-deleted-content';
+  content.textContent = originalText || '';
+
+  wrapper.appendChild(content);
+  return wrapper;
+}
+
+/**
  * Build ProseMirror decorations from block diffs
  */
 function buildDecorations(doc, blockDiffs) {
   const decorations = [];
 
-  // Create a map of blockId -> diff for quick lookup
+  // Create maps for quick lookup
   const diffMap = new Map();
+  const deletedBlocks = [];
+
   for (const diff of blockDiffs) {
     if (diff.type === 'modified' || diff.type === 'added') {
       diffMap.set(diff.blockId, diff);
+    } else if (diff.type === 'deleted') {
+      deletedBlocks.push(diff);
     }
   }
+
+  // Track block positions for deleted block placement
+  const blockPositions = new Map(); // blockId -> { pos, endPos }
 
   // Walk the document and find blocks
   doc.descendants((node, pos) => {
     // BlockNote blocks have a blockId attribute
     const blockId = node.attrs?.id;
     if (!blockId) return;
+
+    // Track position for deleted block placement
+    blockPositions.set(blockId, { pos, endPos: pos + node.nodeSize });
 
     const diff = diffMap.get(blockId);
     if (!diff) return;
@@ -109,6 +135,25 @@ function buildDecorations(doc, blockDiffs) {
       decorations.push(...inlineDecorations);
     }
   });
+
+  // Add deleted block widgets
+  for (const deleted of deletedBlocks) {
+    let insertPos = 0; // Default: start of document
+
+    if (deleted.afterBlockId) {
+      const afterBlock = blockPositions.get(deleted.afterBlockId);
+      if (afterBlock) {
+        insertPos = afterBlock.endPos;
+      }
+    }
+
+    decorations.push(
+      Decoration.widget(insertPos, createDeletedBlockWidget(deleted.originalText, deleted.originalType), {
+        side: 1, // Insert after the position
+        key: `deleted-${deleted.blockId}`,
+      })
+    );
+  }
 
   return DecorationSet.create(doc, decorations);
 }

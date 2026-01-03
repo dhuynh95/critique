@@ -22,8 +22,8 @@ export default function Editor({ editor, onChange, mode, onAddComment, onCopyDif
             const blockId = blockEl?.getAttribute('data-block-id') || 'unknown';
             onAddComment(blockId, selectedText, comment);
           }
-        } else if (e.key === 'c' && onCopyDiff) {
-          // Cmd+Shift+C: Copy diff
+        } else if (e.key === 'd' && onCopyDiff) {
+          // Cmd+Shift+D: Copy diff
           e.preventDefault();
           onCopyDiff();
         }
