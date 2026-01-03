@@ -39,6 +39,7 @@ body {
 .import-zone-container {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 2rem;
@@ -57,6 +58,7 @@ body {
   opacity: 0.3;
   mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
   -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .import-zone {
@@ -135,6 +137,62 @@ body {
 
 .import-zone-glow--active {
   opacity: 1;
+}
+
+/* Recent files list */
+.recent-files {
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 480px;
+}
+
+.recent-files-title {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.recent-files-list {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.recent-files-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.625rem 0.875rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.recent-files-row:hover {
+  background: rgba(196, 163, 90, 0.1);
+}
+
+.recent-files-row:not(:last-child) {
+  border-bottom: 1px solid var(--border);
+}
+
+.recent-files-name {
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.recent-files-row:hover .recent-files-name {
+  color: var(--accent);
+}
+
+.recent-files-date {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  white-space: nowrap;
 }
 
 /* ========================================

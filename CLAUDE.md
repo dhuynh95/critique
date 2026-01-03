@@ -35,5 +35,4 @@ curl http://localhost:3001/api/files/example.md  # get content
 
 - `server.js` — Express API serving markdown from `./docs/`
 - `src/App.jsx` — Session state, URL param handling
-- `src/components/Editor.jsx` — BlockNote wrapper
-- `src/components/ImportZone.jsx` — Drag-drop file upload
+- `src/components/*`- Components

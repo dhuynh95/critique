@@ -20,12 +20,17 @@ if (!fs.existsSync(DOCS_DIR)) {
 // Parse text/plain body
 app.use(express.text({ type: 'text/plain' }))
 
-// API: List all markdown files
+// API: List all markdown files (sorted by mtime, most recent first)
 app.get('/api/files', (req, res) => {
   fs.readdir(DOCS_DIR, (err, files) => {
     if (err) return res.status(500).json({ error: 'Cannot read docs directory' });
     const mdFiles = files.filter(f => f.endsWith('.md'));
-    res.json(mdFiles);
+    const withStats = mdFiles.map(name => {
+      const stat = fs.statSync(path.join(DOCS_DIR, name));
+      return { name, mtime: stat.mtimeMs };
+    });
+    withStats.sort((a, b) => b.mtime - a.mtime);
+    res.json(withStats);
   });
 });
 
