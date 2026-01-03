@@ -16,6 +16,7 @@
     "@blocknote/mantine": "^0.45.0",
     "@blocknote/react": "^0.45.0",
     "@mantine/core": "^8.3.10",
+    "diff": "^8.0.2",
     "express": "^5.2.1",
     "lucide-react": "^0.554.0",
     "react": "^19.2.0",

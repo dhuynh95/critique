@@ -61,6 +61,37 @@ app.put('/api/files/:filename', (req, res) => {
   });
 });
 
+// API: Get annotations for a file
+app.get('/api/files/:filename/annotations', (req, res) => {
+  const filename = path.basename(req.params.filename);
+  if (!filename.endsWith('.md')) {
+    return res.status(400).json({ error: 'Only .md files allowed' });
+  }
+  const annotationsPath = path.join(DOCS_DIR, `${filename}.comments.json`);
+  fs.readFile(annotationsPath, 'utf-8', (err, content) => {
+    if (err) return res.json({ comments: [], suggestModeOriginal: null });
+    try {
+      res.json(JSON.parse(content));
+    } catch {
+      res.json({ comments: [], suggestModeOriginal: null });
+    }
+  });
+});
+
+// API: Save annotations for a file
+app.use(express.json());
+app.put('/api/files/:filename/annotations', (req, res) => {
+  const filename = path.basename(req.params.filename);
+  if (!filename.endsWith('.md')) {
+    return res.status(400).json({ error: 'Only .md files allowed' });
+  }
+  const annotationsPath = path.join(DOCS_DIR, `${filename}.comments.json`);
+  fs.writeFile(annotationsPath, JSON.stringify(req.body, null, 2), 'utf-8', (err) => {
+    if (err) return res.status(500).json({ error: 'Failed to write annotations' });
+    res.json({ ok: true });
+  });
+});
+
 // Serve static frontend
 app.use(express.static(path.join(__dirname, 'dist')));
 app.get('/{*splat}', (req, res) => {

@@ -2,6 +2,8 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useCreateBlockNote } from '@blocknote/react';
 import ImportZone from './components/ImportZone';
 import Editor from './components/Editor';
+import TopBar from './components/TopBar';
+import { useSuggestMode } from './hooks/useSuggestMode';
 
 export default function App() {
   const [activeFile, setActiveFile] = useState(null);
@@ -13,6 +15,18 @@ export default function App() {
 
   const editor = useCreateBlockNote();
   const normalizerEditor = useCreateBlockNote();
+
+  const {
+    mode,
+    toggleMode,
+    acceptAll,
+    rejectAll,
+    addComment,
+    copyDiffToClipboard,
+    hasSuggestions,
+    enterSuggestMode,
+    exitSuggestMode,
+  } = useSuggestMode(activeFile, editor);
 
   // Save to server
   const saveToServer = useCallback(async () => {
@@ -52,6 +66,15 @@ export default function App() {
     await loadContent(normalized);
     setError(null);
   }, [normalizerEditor, loadContent]);
+
+  // Handle mode change
+  const handleModeChange = useCallback((newMode) => {
+    if (newMode === 'suggest' && mode === 'edit') {
+      enterSuggestMode();
+    } else if (newMode === 'edit' && mode === 'suggest') {
+      exitSuggestMode();
+    }
+  }, [mode, enterSuggestMode, exitSuggestMode]);
 
   // URL param loading on mount
   useEffect(() => {
@@ -95,7 +118,23 @@ export default function App() {
       {original === null ? (
         <ImportZone />
       ) : (
-        <Editor editor={editor} onChange={handleEditorChange} />
+        <>
+          <TopBar
+            filename={activeFile}
+            mode={mode}
+            onModeChange={handleModeChange}
+            onCopyDiff={copyDiffToClipboard}
+            onAcceptAll={acceptAll}
+            onRejectAll={rejectAll}
+            hasSuggestions={hasSuggestions}
+          />
+          <Editor
+            editor={editor}
+            onChange={handleEditorChange}
+            mode={mode}
+            onAddComment={addComment}
+          />
+        </>
       )}
     </div>
   );

@@ -302,3 +302,107 @@ body {
 .hidden {
   display: none;
 }
+
+/* ========================================
+   TopBar
+   ======================================== */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbar-filename {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.topbar-toggle {
+  display: flex;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.topbar-toggle-btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.topbar-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.topbar-toggle-btn.active {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+.topbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.5rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.topbar-btn:hover {
+  border-color: var(--accent-dim);
+  color: var(--text-primary);
+}
+
+.topbar-btn-accept:hover {
+  border-color: #5a9a5a;
+  color: #7bc47b;
+}
+
+.topbar-btn-reject:hover {
+  border-color: #9a5a5a;
+  color: #c47b7b;
+}
+
+.topbar-copied {
+  position: absolute;
+  top: -1.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.625rem;
+  background: var(--accent);
+  color: var(--bg-primary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+/* ========================================
+   Suggest Mode Indicator
+   ======================================== */
+.editor-suggest-mode {
+  border-left: 3px solid var(--accent);
+}
